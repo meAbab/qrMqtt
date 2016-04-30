@@ -20,3 +20,6 @@ after prepare SD-card with OS, you need to install -
 ## Running the program ##
 
 ![Alt text](https://github.com/meAbab/qrMqtt/blob/master/running_prog.png?raw=true "Title")
+
+
+Program working video is here - https://www.youtube.com/watch?v=1rtJEr5uat0
