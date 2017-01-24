@@ -15,36 +15,41 @@ using namespace std;
 
 int main(void)
 {
-	try {
+    try
+    {
 
 	class qrMqtt *qr2sp;
 	//int rc;
 	mosqpp::lib_init();
 
-	qr2sp = new qrMqtt ("qr2sp", "pcktatDoor", "192.168.178.100", 1883);
+	qr2sp = new qrMqtt("qr2sp", "pcktatDoor", "192.168.178.100", 1883);
 
-	while (1){
+	while (1)
+	{
 
-		/// call camera [qrcam()], read QR and send to publish()
-		qr2sp->send_msg(qr2sp->qrcam().c_str());
+	    /// call camera [qrcam()], read QR and send to publish()
+	    qr2sp->send_msg(qr2sp->qrcam().c_str());
 
-		rc = qr2sp->loop();
+	    rc = qr2sp->loop();
 
-		if (rc){
+	    if (rc)
+	    {
 			qr2sp->reconnect();
-		}
-/** 
-* will wait 5 sec, so camera light will be turned off
-* for 5 seconds. After 5 sec, camera will active again to read QR-code
-*/
-		usleep(5000000);	
+	    }
+	    /** 
+		* will wait 5 sec, so camera light will be turned off
+		* for 5 seconds. After 5 sec, camera will active again to read QR-code
+		*/
+	    usleep(5000000);
 	}
 	mosqpp::lib_cleanup();
-	} catch (const exception& e){					/// if exception occured in constructor. see class declaration.
-		cerr << "Error on Network Connection.\n" \
-					<< "Check mosquitto is running & IP/PORT\n";
-	}
-	return 0;
+    }
+    catch (const exception &e)
+    { /// if exception occured in constructor. see class declaration.
+		cerr << "Error on Network Connection.\n"
+			 << "Check mosquitto is running & IP/PORT\n";
+    }
+    return 0;
 }
 
 /*
