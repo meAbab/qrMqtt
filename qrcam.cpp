@@ -7,6 +7,7 @@
 #include <iostream>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <unistd.h>
 #include <zbar.h>
 
 #include "qrmosq.h"
@@ -65,6 +66,7 @@ string qrMqtt::qrcam()
 		{
 			break;
 		}
+		usleep(100000);
     }
     return qrdata;
 }
