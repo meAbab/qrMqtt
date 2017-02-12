@@ -23,3 +23,5 @@ after prepare SD-card with OS, you need to install -
 
 
 Program working video is here - https://www.youtube.com/watch?v=1rtJEr5uat0
+
+license - check the license file
