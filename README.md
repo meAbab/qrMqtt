@@ -1,46 +1,107 @@
 # qrMqtt
 
-![Alt text](assets/cover-qrMQTT.JPG "Title")
+![qrMqtt project cover](assets/cover-qrMQTT.JPG)
 
-# QR-Code scanned at door for remote MQTT-client
+`qrMqtt` scans QR codes from a webcam or Raspberry Pi camera and publishes the
+decoded content to an MQTT topic. It uses OpenCV for camera capture, ZBar for
+QR decoding, and the supported Mosquitto C client API for MQTT publishing.
 
-## After installing an OS on your SD card, install the necessary packages
+## Requirements
 
-1. OpenCV dev library [`sudo apt-get install libopencv-dev`]
+On Debian, Ubuntu, or Raspberry Pi OS, install the required packages:
 
-2. The mqtt application [`sudo apt-get install mosquitto`]
+```bash
+sudo apt update
+sudo apt install build-essential pkg-config libopencv-dev libmosquitto-dev libzbar-dev mosquitto mosquitto-clients
+```
 
-3. The mosquitto client library [`sudo apt-get install mosquitto-clients`]
-
-4. Mosquitto dev library [`sudo apt-get install libmosquitto-dev`]
-
-5. Zbar dev library [`sudo apt-get install libzbar0 libzbar-dev`] 
-
+`mosquitto` is required only when running an MQTT broker on the same device.
+The application can also publish to a broker elsewhere on the network.
 
 ## Configuration
 
-In the `src/main.cpp` file, update the provided configuration parameters:
-`qrMqtt qr2sp("qr2sp", "pcktatDoor", "192.168.178.100", 1883);`
+Set the MQTT client ID, topic, broker address, and port in
+[`src/main.cpp`](src/main.cpp):
 
-* `pcktatDoor` -> The MQTT topic name where you want your application to publish the QR scan results to
-* `192.168.178.100` -> The hostname or IP address of the MQTT broker
-* `1883` -> The port of the MQTT broker
+```cpp
+qrMqtt qr2sp("qr2sp", "pcktatDoor", "192.168.178.100", 1883);
+```
 
-## Compile & run
+The constructor arguments are:
 
-After the steps above, you can compile the code by running the command `make` in the root of the downloaded code.
-When this step is completed, you can run the application by executing the command `./qrMqtt`
+1. `qr2sp`: MQTT client ID.
+2. `pcktatDoor`: topic to publish scanned QR data to.
+3. `192.168.178.100`: MQTT broker hostname or IP address.
+4. `1883`: MQTT broker port.
 
-## Using the piCamera
+## Build
 
-If you are using the piCamera instead of a USB webcam, you should run this command to let OpenCV use the piCam:
-`sudo modprobe bcm2835-v4l2`
+Build the application from the repository root:
 
-## Running the program ##
+```bash
+make
+```
 
-![Alt text](assets/running_prog.png "Title")
+The build places intermediate files in `build/` and creates the executable
+`./qrMqtt`.
 
+To compile with warnings treated as errors:
 
-Program working video is here - https://www.youtube.com/watch?v=1rtJEr5uat0
+```bash
+make clean
+make CXXFLAGS='-Wall -Wextra -Werror -g -std=c++11'
+```
 
-license - check the LICENSE file
+To remove generated output:
+
+```bash
+make clean
+```
+
+## Run
+
+Start or identify your MQTT broker, connect a camera, then run:
+
+```bash
+./qrMqtt
+```
+
+For example, watch the default topic from another terminal:
+
+```bash
+mosquitto_sub -h 192.168.178.100 -t pcktatDoor -v
+```
+
+Each successfully decoded QR value is published with MQTT QoS 2. The
+application waits five seconds after a scan before opening the camera again.
+
+## Raspberry Pi Camera
+
+When using a legacy Raspberry Pi camera setup exposed through Video4Linux,
+load the camera module before launching the program:
+
+```bash
+sudo modprobe bcm2835-v4l2
+```
+
+## Project Layout
+
+```text
+assets/          Images used by this README
+include/qrMqtt/  Public application headers
+src/             Application sources
+Makefile         Build configuration
+LICENSE          GNU GPL v2 license text
+```
+
+## Example Output
+
+![qrMqtt running](assets/running_prog.png)
+
+A demonstration video is available on
+[YouTube](https://www.youtube.com/watch?v=1rtJEr5uat0).
+
+## License
+
+This project is distributed under the GNU General Public License, version 2.
+See [LICENSE](LICENSE).
