@@ -1,6 +1,6 @@
 # qrMqtt
 
-![Alt text](https://github.com/meAbab/qrMqtt/blob/master/cover-qrMQTT.JPG?raw=true "Title")
+![Alt text](assets/cover-qrMQTT.JPG "Title")
 
 # QR-Code scanned at door for remote MQTT-client
 
@@ -12,15 +12,15 @@
 
 3. The mosquitto client library [`sudo apt-get install mosquitto-clients`]
 
-4. Mosquitto dev library [`sudo apt-get install libmosquitto-dev libmosquittopp-dev`
+4. Mosquitto dev library [`sudo apt-get install libmosquitto-dev`]
 
 5. Zbar dev library [`sudo apt-get install libzbar0 libzbar-dev`] 
 
 
 ## Configuration
 
-In the `main.cpp` file, update the provided configuration parameters:
-`qr2sp = new qrMqtt("qr2sp", "pcktatDoor", "192.168.178.100", 1883);`
+In the `src/main.cpp` file, update the provided configuration parameters:
+`qrMqtt qr2sp("qr2sp", "pcktatDoor", "192.168.178.100", 1883);`
 
 * `pcktatDoor` -> The MQTT topic name where you want your application to publish the QR scan results to
 * `192.168.178.100` -> The hostname or IP address of the MQTT broker
@@ -38,9 +38,9 @@ If you are using the piCamera instead of a USB webcam, you should run this comma
 
 ## Running the program ##
 
-![Alt text](https://github.com/meAbab/qrMqtt/blob/master/running_prog.png?raw=true "Title")
+![Alt text](assets/running_prog.png "Title")
 
 
 Program working video is here - https://www.youtube.com/watch?v=1rtJEr5uat0
 
-license - check the license file
+license - check the LICENSE file

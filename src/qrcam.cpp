@@ -7,10 +7,11 @@
 #include <iostream>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/videoio.hpp>
 #include <unistd.h>
 #include <zbar.h>
 
-#include "qrmosq.h"
+#include <qrMqtt/qrmosq.h>
 
 using namespace cv;
 using namespace std;
@@ -43,7 +44,7 @@ string qrMqtt::qrcam()
 		}
 
 		Mat gray;
-		cvtColor(frame, gray, CV_BGR2GRAY); // convert frame array to grey
+		cvtColor(frame, gray, COLOR_BGR2GRAY); // convert frame array to grey
 							// as transform RGB space to GRAY.
 		int width = frame.cols;
 		int height = frame.rows;
@@ -53,7 +54,7 @@ string qrMqtt::qrcam()
 									// Y800 = 8 bit monochrome format.
 									// GRAY also accepted.
 
-		int n = scanner.scan(image);
+		scanner.scan(image);
 
 		for (Image::SymbolIterator symbol = image.symbol_begin();
 			symbol != image.symbol_end(); ++symbol)
