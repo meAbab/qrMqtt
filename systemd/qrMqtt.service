@@ -1,0 +1,22 @@
+[Unit]
+Description=qrMqtt secure QR event publisher
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=qrmqtt
+Group=qrmqtt
+SupplementaryGroups=video
+ExecStart=/usr/local/bin/qrMqtt --config /etc/qrMqtt/qrMqtt.conf
+EnvironmentFile=-/etc/qrMqtt/qrMqtt.env
+StateDirectory=qrMqtt
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+NoNewPrivileges=true
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

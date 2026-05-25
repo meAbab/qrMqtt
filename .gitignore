@@ -1,2 +1,4 @@
-build/
-qrMqtt
+/build/
+/qrMqtt
+/cmake-build/
+/Testing/

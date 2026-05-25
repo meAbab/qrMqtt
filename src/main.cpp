@@ -1,30 +1,37 @@
-/**
-* @file main.cpp
-* call camera, call publisher to send
-* msg to subscriber, waits for 5 sec,
-* and recall camera.
-*/
-
+#include <atomic>
+#include <csignal>
+#include <exception>
 #include <iostream>
 #include <stdexcept>
 #include <string>
-#include <unistd.h>
 
-#include <qrMqtt/qrmosq.h>
+#include <mosquitto.h>
 
-using namespace std;
+#include <qrMqtt/config.hpp>
+#include <qrMqtt/duplicate_filter.hpp>
+#include <qrMqtt/event.hpp>
+#include <qrMqtt/mqtt_client.hpp>
+#include <qrMqtt/qr_scanner.hpp>
+#include <qrMqtt/token_validator.hpp>
 
 namespace
 {
+std::atomic<bool> running(true);
+
+void stop(int)
+{
+    running.store(false);
+}
+
 class MosquittoLibrary
 {
   public:
     MosquittoLibrary()
     {
-        int rc = mosquitto_lib_init();
+        const int rc = mosquitto_lib_init();
         if (rc != MOSQ_ERR_SUCCESS)
         {
-            throw runtime_error(mosquitto_strerror(rc));
+            throw std::runtime_error(mosquitto_strerror(rc));
         }
     }
 
@@ -32,53 +39,61 @@ class MosquittoLibrary
     {
         mosquitto_lib_cleanup();
     }
-
-    MosquittoLibrary(const MosquittoLibrary &) = delete;
-    MosquittoLibrary &operator=(const MosquittoLibrary &) = delete;
 };
+
+std::string configPath(int argc, char **argv)
+{
+    if (argc == 1)
+    {
+        return "config/qrMqtt.conf";
+    }
+    if (argc == 3 && std::string(argv[1]) == "--config")
+    {
+        return argv[2];
+    }
+    throw std::runtime_error("Usage: qrMqtt [--config PATH]");
+}
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
     try
     {
-        MosquittoLibrary mqtt;
-        qrMqtt qr2sp("qr2sp", "pcktatDoor", "192.168.178.100", 1883);
+        std::signal(SIGINT, stop);
+        std::signal(SIGTERM, stop);
 
-        while (true)
+        const qrmqtt::Config config = qrmqtt::Config::load(configPath(argc, argv));
+        MosquittoLibrary mqtt_library;
+        qrmqtt::MqttClient mqtt(config,
+                                 qrmqtt::statusJson(config.device_id, "online"),
+                                 qrmqtt::statusJson(config.device_id, "offline"));
+        mqtt.start();
+
+        qrmqtt::TokenValidator validator(config.security);
+        qrmqtt::DuplicateFilter duplicate_filter(config.camera.duplicate_window_seconds);
+        qrmqtt::QrScanner scanner(config.camera);
+        mqtt.publish("status", qrmqtt::statusJson(config.device_id, "camera_ready"), true);
+
+        while (running.load())
         {
-            /// call camera [qrcam()], read QR and send to publish()
-            qr2sp.send_msg(qr2sp.qrcam().c_str());
+            const std::string payload = scanner.next(running);
+            if (payload.empty() || !duplicate_filter.accept(payload))
+            {
+                continue;
+            }
 
-            /**
-            * will wait 5 sec, so camera light will be turned off
-            * for 5 seconds. After 5 sec, camera will active again to read QR-code
-            */
-            usleep(5000000);
+            const qrmqtt::ValidationResult result = validator.validate(payload);
+            mqtt.publish("events/scan", qrmqtt::scanEventJson(config.device_id, result));
+            mqtt.publish("status", qrmqtt::statusJson(
+                config.device_id, result.approved ? "last_scan_approved" : "last_scan_rejected"), true);
+            std::cout << "QR event " << result.code_id << ": " << result.reason << '\n';
         }
+        mqtt.publish("status", qrmqtt::statusJson(config.device_id, "stopping"), true);
     }
-    catch (const exception &e)
-    { /// if exception occurred in constructor. see class declaration.
-        cerr << "Error on Network Connection: " << e.what() << "\n"
-             << "Check mosquitto is running & IP/PORT\n";
+    catch (const std::exception &error)
+    {
+        std::cerr << "qrMqtt error: " << error.what() << '\n';
         return 1;
     }
     return 0;
 }
-
-/*
-Once a cake sent to us, bought back to the package-center and next 2 days,
-we were not able to pick it.
-However at the same day we were rounding near by package-center for few times.
-
-While getting back to home, it was late and 2 days later we'd a cake with smell like feet.
-
-Anyway, I guess a door-bell with QR-code reader that somehow
-connected with a smart phone [mqtt i used here] would be helpful for package owner.
-
-For future idea, a packet box can be build infront of the door,
-and order id [that you made order in ebay, amazon, aliexpress etc],
-description may supplied to MQTT broker. Once QR-code scanned with
-the supplied order-id and description, the packet box door should open.
-The postman just keep the packet inside the box and close it.
-*/
